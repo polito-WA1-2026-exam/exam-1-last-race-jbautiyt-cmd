@@ -13,7 +13,7 @@ function buildAdjacency() {
   const db = getDb();
   const segments = db.prepare('SELECT station_a_id, station_b_id FROM segments').all();
 
-  const adj = new Map(); // empty map: station_id → [neighbour ids]
+  const adj = new Map(); // empty map: station_id => [neighbour ids]
 
   // addEdge adds the connection in both directions (segments are bidirectional)
   const addEdge = (a, b) => {
@@ -47,7 +47,7 @@ export function shortestPathLength(fromId, toId) {
     const [node, dist] = queue.shift(); // extract the first element (FIFO)
 
     for (const next of adj.get(node) || []) { // for each neighbour of the current station
-      if (next === toId) return dist + 1;      // destination found! BFS guarantees this is the shortest
+      if (next === toId) return dist + 1;      // destination found! BFS guarantees shortest path
 
       if (!visited.has(next)) {       // if we haven't visited this neighbour yet
         visited.add(next);            // mark it as visited
@@ -84,7 +84,7 @@ export function pickRandomStations() {
   );
 
   // Fallback: if after 500 attempts no valid pair is found,
-  // use the first and last stations in the list (guaranteed valid by the network design)
+  // use the first and last stations (guaranteed valid by the network design)
   if (startId === endId || shortestPathLength(startId, endId) < 3) {
     startId = ids[0];
     endId = ids[ids.length - 1];
@@ -99,19 +99,20 @@ export function pickRandomStations() {
 // (their position difference is exactly 1).
 function getLinesForSegment(aId, bId) {
   const db = getDb();
+  // Joins line_stations with itself to find lines where both stations appear consecutively
   return db
     .prepare(
       `SELECT DISTINCT ls1.line_id AS line_id
        FROM line_stations ls1
-       JOIN line_stations ls2 ON ls1.line_id = ls2.line_id  -- same line_id for both stations
+       JOIN line_stations ls2 ON ls1.line_id = ls2.line_id
        WHERE (
-         (ls1.station_id = ? AND ls2.station_id = ?)  -- A comes before B
-         OR (ls1.station_id = ? AND ls2.station_id = ?)  -- B comes before A
+         (ls1.station_id = ? AND ls2.station_id = ?)
+         OR (ls1.station_id = ? AND ls2.station_id = ?)
        )
-       AND ABS(ls1.position - ls2.position) = 1`  -- they are adjacent positions (consecutive)
+       AND ABS(ls1.position - ls2.position) = 1`
     )
-    .all(aId, bId, bId, aId) // four parameters: A, B, B, A
-    .map((r) => r.line_id);  // return only the array of ids
+    .all(aId, bId, bId, aId)
+    .map((r) => r.line_id); // return only the array of line ids
 }
 
 // ── segmentExists ─────────────────────────────────────────────────────────────
@@ -142,7 +143,7 @@ export function validateRoute(startId, endId, route) {
     return { valid: false, reason: 'Route is empty' };
   }
 
-  const first = route[0];             // first segment
+  const first = route[0];               // first segment
   const last = route[route.length - 1]; // last segment
 
   // Rule: the route must start at the assigned station
@@ -197,7 +198,7 @@ export function validateRoute(startId, endId, route) {
       // First segment: assign the initial line
       currentLine = lines[0];
     } else if (!lines.includes(currentLine)) {
-      // The next segment is not on the current line → line change attempt
+      // The next segment is not on the current line => line change attempt
       // Rule: line changes are only valid at interchange stations
       if (!isInterchange(fromId)) {
         return { valid: false, reason: 'Line change at non-interchange station' };
@@ -205,7 +206,7 @@ export function validateRoute(startId, endId, route) {
       // Switch to a line that serves the new segment
       currentLine = lines.find((l) => l !== currentLine) ?? lines[0];
     }
-    // If lines.includes(currentLine), we stay on the same line → nothing to do
+    // If lines.includes(currentLine), we stay on the same line => nothing to do
   }
 
   return { valid: true }; // all rules satisfied
