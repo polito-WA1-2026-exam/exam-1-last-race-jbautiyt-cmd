@@ -3,21 +3,20 @@
 // and options to play again or view the ranking.
 
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom'; // Link navigates without reloading
+import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client.js';
 
 export default function ResultPage() {
-  const { gameId } = useParams(); // game id from the URL
-  const [game, setGame] = useState(null); // final game data
+  const { gameId } = useParams();
+  const [game, setGame] = useState(null);
   const [error, setError] = useState('');
 
-  // Load the final game data when the component mounts
   useEffect(() => {
     api
-      .getGame(gameId)          // GET /api/games/:id
-      .then((g) => setGame(g)) // store the game data (score, isValidRoute, etc.)
+      .getGame(gameId)
+      .then((g) => setGame(g))
       .catch(() => setError('Unable to load result.'));
-  }, [gameId]); // runs only on mount (gameId does not change)
+  }, [gameId]);
 
   if (error) return <p className="error-msg">{error}</p>;
   if (!game) return <p className="status-msg">Loading result...</p>;
@@ -25,8 +24,6 @@ export default function ResultPage() {
   return (
     <section className="page game-page">
       <h1>Phase 4 — Result</h1>
-
-      {/* Shows a different message depending on whether the route was valid or not */}
       {!game.isValidRoute ? (
         <p className="error-msg">
           The route you submitted was invalid or incomplete. You lost all your coins.
@@ -34,19 +31,15 @@ export default function ResultPage() {
       ) : (
         <p>Well done! Your route was valid.</p>
       )}
-
-      {/* Final score — ?? 0 is the nullish coalescing operator: uses 0 if score is null */}
       <p className="score-display">
         Final score: <strong>{game.score ?? 0}</strong> coins
       </p>
-
       <div className="result-actions">
-        {/* Link works like an <a> but without reloading the page */}
         <Link to="/game/setup" className="btn-primary">
-          New game {/* starts a new game from the beginning */}
+          New game
         </Link>
         <Link to="/ranking" className="btn-secondary">
-          View ranking {/* goes to the ranking page */}
+          View ranking
         </Link>
       </div>
     </section>

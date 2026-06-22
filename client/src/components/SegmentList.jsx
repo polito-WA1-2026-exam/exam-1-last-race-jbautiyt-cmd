@@ -3,15 +3,8 @@
 // The player builds their route by clicking segments in order.
 // Already selected segments are shown in green and cannot be selected again.
 
-// Props:
-//   segments: array of { id, stationAId, stationBId, stationAName, stationBName }
-//   selectedKeys: Set of strings "smallerId-largerId" — segments already in the route
-//   onSelect: function called when the player clicks a segment
-//   disabled: boolean — disables all buttons (when time runs out)
 export default function SegmentList({ segments, selectedKeys, onSelect, disabled }) {
-
-  // Checks whether a segment is already selected by looking up its normalised key in the Set
-  // Checked in both directions (A-B and B-A) in case the order does not match
+  // Checks whether a segment is already selected (checked in both directions A-B and B-A)
   const isSelected = (seg) =>
     selectedKeys.has(`${seg.stationAId}-${seg.stationBId}`) ||
     selectedKeys.has(`${seg.stationBId}-${seg.stationAId}`);
@@ -25,13 +18,11 @@ export default function SegmentList({ segments, selectedKeys, onSelect, disabled
           <li key={seg.id}>
             <button
               type="button"
-              // Conditional CSS class: 'selected' adds the green background when already in the route
               className={`segment-btn ${isSelected(seg) ? 'selected' : ''}`}
-              // Disabled if: time ran out OR segment is already selected
               disabled={disabled || isSelected(seg)}
-              onClick={() => onSelect(seg)} // calls the parent component's function with the segment
+              onClick={() => onSelect(seg)}
             >
-              {seg.stationAName} — {seg.stationBName} {/* shows the station names */}
+              {seg.stationAName} — {seg.stationBName}
             </button>
           </li>
         ))}
