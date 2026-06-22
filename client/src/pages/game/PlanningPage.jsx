@@ -65,8 +65,30 @@ export default function PlanningPage() {
 
   const handleSelectSegment = (seg) => {
     const key = `${Math.min(seg.stationAId, seg.stationBId)}-${Math.max(seg.stationAId, seg.stationBId)}`;
-    if (selectedKeys.has(key)) return;
-    setRoute((prev) => [...prev, { fromId: seg.stationAId, toId: seg.stationBId }]);
+
+    setRoute((prev) => {
+      const usedKeys = new Set(
+        prev.map((s) => `${Math.min(s.fromId, s.toId)}-${Math.max(s.fromId, s.toId)}`)
+      );
+      if (usedKeys.has(key)) return prev;
+
+      const currentId = prev.length === 0 ? game.startStation.id : prev[prev.length - 1].toId;
+
+      let fromId;
+      let toId;
+      if (seg.stationAId === currentId) {
+        fromId = seg.stationAId;
+        toId = seg.stationBId;
+      } else if (seg.stationBId === currentId) {
+        fromId = seg.stationBId;
+        toId = seg.stationAId;
+      } else {
+        fromId = seg.stationAId;
+        toId = seg.stationBId;
+      }
+
+      return [...prev, { fromId, toId }];
+    });
   };
 
   const handleUndo = () => setRoute((r) => r.slice(0, -1));
